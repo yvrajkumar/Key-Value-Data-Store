@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Key Value Data Store</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script> 
+        
+        function CRD() 
+	{ 
+	    var objToStr, temp, strToObj;
+            var paramString = document.URL.split('?')[1]; 
+            var params_arr = paramString.split('&'); 
+	    var values=[];
+            for (var i = 0; i < params_arr.length; i++) 
+	    {                
+                var pair = params_arr[i].split('='); 
+                values[i] = pair[1]; 
+            }
+	    if(values[3]=="create")
+	    {
+		var l=1;
+		var DataStore = localStorage.getItem("DataStore");
+		var TTL = localStorage.getItem("TTL");
+                if(DataStore!=null && DataStore.length>=1024*1024*1024)
+		{
+			document.getElementById("demo").innerHTML = 'The Data Storage reaches 1GB(maximum space). So, please delete unwanted data in order to add new 									data. ';
+		}
+                else
+                {
+			DataStore = JSON.parse(DataStore); 
+			TTL = JSON.parse(TTL);
+			if(DataStore!=null)
+			{
+				for(var i in DataStore)
+				{
+					if(values[0]==DataStore[i].substring(2,values[0].length+2))
+					{
+						document.getElementById("demo").innerHTML = 'The key is already exist in the record.';
+						l=0;
+						break;
+					}
+				}
+			}
+			if(l==1)
+			{
+				if(DataStore == null) 
+					DataStore = [];
+				if(TTL == null && values[2]!=0) 
+				{
+					TTL = [];
+				}
+				if(TTL != null && values[2]!=0) 
+				{
+					var addTTL={};
+					var d = new Date();
+					var sec=parseInt(values[2]);
+					d.setSeconds(d.getSeconds() + sec);
+					addTTL[values[0]]=d;
+					addTTL = JSON.stringify(addTTL); 				
+					TTL.push(addTTL);
+					localStorage.setItem("TTL", JSON.stringify(TTL));
+				}
+				var add={};
+				add[values[0]]=values[1];
+				add = JSON.stringify(add); 				
+				DataStore.push(add);
+				localStorage.setItem("DataStore", JSON.stringify(DataStore));
+				document.getElementById("demo").innerHTML = 'The data is saved sucessfully.';
+			}
+                }
+	    } 
+	    else if(values[1]=="read")
+	    {
+		var l=1;
+		var DataStore = localStorage.getItem("DataStore");
+		DataStore = JSON.parse(DataStore); 
+		if(DataStore!=null)
+		{
+			for(var i in DataStore)
+			{
+				if(values[0]==DataStore[i].substring(2,values[0].length+2))
+				{
+					if(isLive(values[0]))
+					{
+						document.getElementById("demo").innerHTML = 'The value for "'+values[0]+'" (key) is '+DataStore[i].substring(values												[0].length+5,DataStore[i].length-2);
+						l=0;
+					}
+					else
+					{
+						document.getElementById("demo").innerHTML = 'The key is expired. The key will no longer be available for Read or Delete operations.';
+						l=0;
+					}
+				}
+			}
+		}
+		if(l==1)
+		{
+			document.getElementById("demo").innerHTML = 'The key is not present in the record.';
+		}
+	    }
+	    else if(values[1]=="delete")
+	    {
+		var l=1;
+		var DataStore = localStorage.getItem("DataStore");
+		DataStore = JSON.parse(DataStore); 
+		if(DataStore!=null)
+		{
+			for(var i in DataStore)
+			{
+				if(values[0]==DataStore[i].substring(2,values[0].length+2))
+				{	
+					if(isLive(values[0]))
+					{
+						DataStore.splice(i);
+						localStorage.setItem("DataStore", JSON.stringify(DataStore));
+						document.getElementById("demo").innerHTML = 'The record of the "'+values[0]+'" (key) is deleted sucessfully.';
+						l=0;
+					}
+					else
+					{
+						document.getElementById("demo").innerHTML = 'The key is expired. The key will no longer be available for Read or Delete operations.';
+						l=0;
+					}
+				}
+			}
+		}
+		if(l==1)
+		{
+			document.getElementById("demo").innerHTML = 'The key is not present in the record.';
+		}
+	    }
+	    
+
+        } 
+	function isLive(key)
+	{
+		var l=1;
+		var TTL = localStorage.getItem("TTL");
+		TTL = JSON.parse(TTL); 
+		if(TTL!=null)
+		{
+			var CurrTime = new Date();
+			CurrTime=JSON.stringify(CurrTime);
+			for(var i in TTL)
+			{
+				if(key==TTL[i].substring(2,key.length+2))
+				{
+					var ExpTime=JSON.parse(TTL[i]);
+					if(CurrTime>JSON.stringify(ExpTime[key]))
+					{
+						return 0;
+					}
+					else
+					{
+						return 1;
+					}
+					l=0;
+				}
+			}
+		}
+		if(l==1)
+		{
+			return 1;
+		}
+	} 
+	
+    </script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+a
+{
+color:#484848;
+text-decoration: none;
+}
+
+input[type=text], select, textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+label {
+  padding: 12px 12px 12px 0;
+  display: inline-block;
+}
+
+input[type=submit] {
+  background-color: #909090;
+  color: #f2f2f2;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  float: center;
+}
+
+input[type=submit]:hover {
+  background-color: #888888;
+}
+
+.container{
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  padding: 20px;
+}
+
+.col-25 {
+  float: left;
+  width: 25%;
+  margin-top: 6px;
+}
+
+.col-75 {
+  float: left;
+  width: 75%;
+  margin-top: 6px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+@media screen and (max-width: 600px) {
+  .col-25, .col-75, input[type=submit] {
+    width: 100%;
+    margin-top: 0;
+  }
+}
+</style>
+
+</head>
+<body onload="CRD()">
+
+<a href="index.html"><h1 align="center">Key Value Data Store</h1></a>
+
+<div class="container">
+  <h1 id="demo"></h1>
+  <form action="create.html">
+    <div class="row" align="center">
+	<br>
+      <input type="submit" value="Create">
+    </div>
+  </form>
+  <form action="read.html">
+    <div class="row" align="center">
+	<br>
+      <input type="submit" value="Read">
+    </div>
+  </form>
+  <form action="delete.html">
+    <div class="row" align="center">
+	<br>
+      <input type="submit" value="Delete">
+    </div>
+  </form>
+</div>
+
+</body>
+</html>
